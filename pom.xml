@@ -4,7 +4,7 @@
     <groupId>io.github.iamaldren</groupId>
     <artifactId>doc-converter-maven-plugin</artifactId>
     <packaging>maven-plugin</packaging>
-    <version>1.0.0</version>
+    <version>1.0.1-SNAPSHOT</version>
 
     <name>doc-converter-maven-plugin</name>
     <url>http://maven.apache.org</url>
@@ -97,7 +97,7 @@
         <connection>scm:git:git://github.com/iamaldren/doc-converter-maven-plugin.git</connection>
         <developerConnection>scm:git:git@github.com:iamaldren/doc-converter-maven-plugin.git</developerConnection>
         <url>https://github.com/iamaldren/doc-converter-maven-plugin</url>
-        <tag>doc-converter-maven-plugin-1.0.0</tag>
+        <tag>HEAD</tag>
     </scm>
 
     <build>

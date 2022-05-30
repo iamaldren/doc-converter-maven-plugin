@@ -9,15 +9,17 @@ import com.fasterxml.jackson.dataformat.csv.CsvSchema;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import io.github.iamaldren.exceptions.ParsingException;
 import org.json.JSONArray;
-import org.json.JSONObject;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 public final class CsvConverterService extends AbstractFileService {
 
@@ -27,7 +29,7 @@ public final class CsvConverterService extends AbstractFileService {
         log.setLevel(Level.INFO);
     }
 
-    public static String convertCsvToJson(InputStream in) throws ParsingException {
+    public static String convertCsvToJson(InputStream in, Map<String, String> mapHeader) throws ParsingException {
         List<Map<String, String>> response = new LinkedList<>();
 
         CsvMapper mapper = new CsvMapper();
@@ -38,11 +40,17 @@ public final class CsvConverterService extends AbstractFileService {
                     .with(schema)
                     .readValues(in);
 
-            while (iterator.hasNext()) {
-                response.add(iterator.next());
-            }
-
-            log.info("Size is " + response.size());
+            iterator.readAll()
+                    .stream()
+                    .map(data -> {
+                        if(mapHeader != null && !mapHeader.isEmpty()) {
+                            return data.keySet()
+                                    .stream()
+                                    .collect(Collectors.toMap(key -> mapHeader.get(key.trim().replaceAll("\\s+", "")), key -> data.get(key)));
+                        }
+                        return data;
+                    })
+                    .forEach(data -> response.add(data));
 
             JSONArray json = new JSONArray(response);
             return json.toString();
@@ -52,8 +60,8 @@ public final class CsvConverterService extends AbstractFileService {
         }
     }
 
-    public static String convertCsvToYaml(InputStream in) throws ParsingException, JsonProcessingException {
-        String json = convertCsvToJson(in);
+    public static String convertCsvToYaml(InputStream in, Map<String, String> mapHeader) throws ParsingException, JsonProcessingException {
+        String json = convertCsvToJson(in, mapHeader);
 
         JsonNode jsonNode = new ObjectMapper().readTree(json);
         return new YAMLMapper().writeValueAsString(jsonNode);

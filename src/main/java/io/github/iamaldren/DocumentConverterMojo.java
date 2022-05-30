@@ -11,6 +11,7 @@ import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
 
 import java.io.InputStream;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -35,7 +36,7 @@ public class DocumentConverterMojo extends AbstractMojo {
     private String prefix;
 
     @Parameter(property = "mapHeader")
-    private String mapHeader;
+    private Map<String, String> mapHeader;
 
     @Parameter(defaultValue = "${project}", required = true, readonly = true)
     private MavenProject mavenProject;
@@ -97,12 +98,6 @@ public class DocumentConverterMojo extends AbstractMojo {
             isValid = false;
         }
 
-        if((mapHeader != null && !mapHeader.isBlank()) &&
-                (!mapHeader.equalsIgnoreCase(TRUE)) && !mapHeader.equalsIgnoreCase(FALSE)) {
-            log.warning("mapHeader property only expects true or false value");
-            isValid = false;
-        }
-
         return isValid;
     }
 
@@ -161,7 +156,7 @@ public class DocumentConverterMojo extends AbstractMojo {
     private void convertCsvToJson() {
         try {
             InputStream csvInputStream = CsvConverterService.convertFileToStream(inputDir);
-            String json = CsvConverterService.convertCsvToJson(csvInputStream);
+            String json = CsvConverterService.convertCsvToJson(csvInputStream, mapHeader);
             CsvConverterService.convertStringToFile(outputDir, json);
         } catch (Exception e) {
             log.log(Level.SEVERE, e.getLocalizedMessage(), e);
@@ -171,7 +166,7 @@ public class DocumentConverterMojo extends AbstractMojo {
     private void convertCsvToYaml() {
         try {
             InputStream csvInputStream = CsvConverterService.convertFileToStream(inputDir);
-            String yaml = CsvConverterService.convertCsvToYaml(csvInputStream);
+            String yaml = CsvConverterService.convertCsvToYaml(csvInputStream, mapHeader);
             CsvConverterService.convertStringToFile(outputDir, yaml);
         } catch (Exception e) {
             log.log(Level.SEVERE, e.getLocalizedMessage(), e);

@@ -1,12 +1,21 @@
 package io.github.iamaldren.services;
 
-import com.thoughtworks.xstream.XStream;
-import com.univocity.parsers.csv.CsvParser;
-import com.univocity.parsers.csv.CsvParserSettings;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.MappingIterator;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.csv.CsvMapper;
+import com.fasterxml.jackson.dataformat.csv.CsvSchema;
+import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
+import io.github.iamaldren.exceptions.ParsingException;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
+import java.io.IOException;
 import java.io.InputStream;
-import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -18,53 +27,36 @@ public final class CsvConverterService extends AbstractFileService {
         log.setLevel(Level.INFO);
     }
 
-    public static String convertCsvToXml(String csv, String prefix, boolean isMapHeader) throws Exception {
+    public static String convertCsvToJson(InputStream in) throws ParsingException {
+        List<Map<String, String>> response = new LinkedList<>();
 
-        CsvParserSettings settings = new CsvParserSettings();
-        settings.detectFormatAutomatically();
-        settings.setEmptyValue("");
-        settings.setNullValue("");
-        CsvParser parser = new CsvParser(settings);
+        CsvMapper mapper = new CsvMapper();
+        CsvSchema schema = CsvSchema.emptySchema().withHeader();
 
-        InputStream input = convertStringToStream(csv);
+        try {
+            MappingIterator<Map<String, String>> iterator = mapper.reader(Map.class)
+                    .with(schema)
+                    .readValues(in);
 
-        List<String[]> rows = parser.parseAll(input);
-
-        XStream xstream = new XStream();
-        if(prefix != null && !prefix.isBlank()) {
-            if(prefix.contains(".")) {
-                String[] prefixes = prefix.split(".");
-                Arrays.stream(prefixes)
-                        .forEach(pfx -> xstream.alias(pfx, Object.class));
-            } else {
-                xstream.alias(prefix, Object.class);
+            while (iterator.hasNext()) {
+                response.add(iterator.next());
             }
-        } else {
-            xstream.alias("rows", List.class);
-            xstream.alias("row", String[].class);
-            xstream.alias("item", String.class);
-        }
 
-        if(isMapHeader) {
-            log.info("Mapping headers");
-            String[] headers = rows.get(0);
-            Arrays.stream(headers)
-                    .map(header -> header.trim().replaceAll("\\s+",""))
-                    .peek(header -> log.info(String.format("Header: %s", header)))
-                    .forEach(header -> xstream.alias(header, String.class));
-        }
+            log.info("Size is " + response.size());
 
-        rows.remove(0);
-        return xstream.toXML(rows);
+            JSONArray json = new JSONArray(response);
+            return json.toString();
+        } catch (IOException e) {
+            log.log(Level.SEVERE, "Error parsing csv to json", e);
+            throw new ParsingException(e.getLocalizedMessage());
+        }
     }
 
-    public static String convertCsvToJson(String csv) {
+    public static String convertCsvToYaml(InputStream in) throws ParsingException, JsonProcessingException {
+        String json = convertCsvToJson(in);
 
-    }
-
-    public static String convertCsvToYaml(String csv, String prefix, boolean isMapHeader) throws Exception{
-        String xml = convertCsvToXml(csv, prefix, isMapHeader);
-        return XMLConverterService.convertXmlToYaml(xml);
+        JsonNode jsonNode = new ObjectMapper().readTree(json);
+        return new YAMLMapper().writeValueAsString(jsonNode);
     }
 
 }

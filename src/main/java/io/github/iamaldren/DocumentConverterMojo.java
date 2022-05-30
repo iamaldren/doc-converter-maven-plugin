@@ -10,6 +10,7 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
 
+import java.io.InputStream;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -158,13 +159,19 @@ public class DocumentConverterMojo extends AbstractMojo {
     }
 
     private void convertCsvToJson() {
-
+        try {
+            InputStream csvInputStream = CsvConverterService.convertFileToStream(inputDir);
+            String json = CsvConverterService.convertCsvToJson(csvInputStream);
+            CsvConverterService.convertStringToFile(outputDir, json);
+        } catch (Exception e) {
+            log.log(Level.SEVERE, e.getLocalizedMessage(), e);
+        }
     }
 
     private void convertCsvToYaml() {
         try {
-            String csv = CsvConverterService.convertFileToString(inputDir);
-            String yaml = CsvConverterService.convertCsvToYaml(csv, prefix, Boolean.valueOf(mapHeader));
+            InputStream csvInputStream = CsvConverterService.convertFileToStream(inputDir);
+            String yaml = CsvConverterService.convertCsvToYaml(csvInputStream);
             CsvConverterService.convertStringToFile(outputDir, yaml);
         } catch (Exception e) {
             log.log(Level.SEVERE, e.getLocalizedMessage(), e);

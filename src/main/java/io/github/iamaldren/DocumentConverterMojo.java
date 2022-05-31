@@ -20,20 +20,17 @@ public class DocumentConverterMojo extends AbstractMojo {
 
     private static final Logger log = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
 
-    @Parameter(property = "inputDir")
+    @Parameter(property = "inputDir", required = true)
     private String inputDir;
 
-    @Parameter(property = "outputDir")
+    @Parameter(property = "outputDir", required = true)
     private String outputDir;
 
-    @Parameter(property = "inputType")
+    @Parameter(property = "inputType", required = true)
     private String inputType;
 
-    @Parameter(property = "outputType")
+    @Parameter(property = "outputType", required = true)
     private String outputType;
-
-    @Parameter(property = "prefix")
-    private String prefix;
 
     @Parameter(property = "mapHeader")
     private Map<String, String> mapHeader;
@@ -41,16 +38,9 @@ public class DocumentConverterMojo extends AbstractMojo {
     @Parameter(defaultValue = "${project}", required = true, readonly = true)
     private MavenProject mavenProject;
 
-    private static final String TRUE = "true";
-    private static final String FALSE = "false";
-
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         log.setLevel(Level.INFO);
-
-        if(!validateParams()) {
-            return;
-        }
 
         DocType input = DocType.getName(inputType.toLowerCase());
 
@@ -73,32 +63,6 @@ public class DocumentConverterMojo extends AbstractMojo {
             default:
                 log.warning("Input type not yet supported.");
         }
-    }
-
-    private boolean validateParams() {
-        boolean isValid = true;
-
-        if(inputDir == null || inputDir.isBlank()) {
-            log.warning("Input Directory is missing, exiting the program");
-            isValid = false;
-        }
-
-        if(outputDir == null || outputDir.isBlank()) {
-            log.warning("Output Directory is missing, exiting the program");
-            isValid = false;
-        }
-
-        if(inputType == null || inputType.isBlank()) {
-            log.warning("Input type is missing, exiting the program");
-            isValid = false;
-        }
-
-        if(outputType == null || outputType.isBlank()) {
-            log.warning("Output type is missing, exiting the program");
-            isValid = false;
-        }
-
-        return isValid;
     }
 
     private void convertXmlDoc() {
